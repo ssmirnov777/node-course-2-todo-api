@@ -1,12 +1,12 @@
 const expect = require('expect');
 const request = require('supertest');
-
+const {ObjectID} = require('mongodb');
 const {app} = require('./../server/server');
 const {Todo} = require('./../server/models/todo');
 
 const todos = [
-  {text:'first todo record'},
-  {text: 'second todo record'}
+  {_id: new ObjectID(), text:'first todo record'},
+  {_id: new ObjectID(), text: 'second todo record'}
 
 ];
 
@@ -59,7 +59,7 @@ describe ('POST /todos', () => {
   })
 });
 
-describe ("GET /totos", () => {
+describe ("GET /todos", () => {
   it ("get list of todos", (done) => {
     request(app)
       .get('/todos')
@@ -68,4 +68,31 @@ describe ("GET /totos", () => {
         expect(res.body.todos.length).toBe(2);
       }).end(done);
   })
+});
+
+describe ("GET /todos/:id", () => {
+  it ("get todo by id", (done) => {
+    request(app)
+      .get (`/todos/${todos[0]._id.toHexString()}`)
+      .expect(200)
+      .expect (res => {
+        expect (res.body.todo.text).toBe(todos[0].text)
+      }).end(done)
+  });
+
+  it ("invalid id", (done) => {
+    request(app)
+      .get('/todos/123')
+      .expect(404)
+      .end(done)
+  });
+
+  it ("unknown id", (done) => {
+    const inv_id = new ObjectID().toHexString();
+    request(app)
+      .get(`/todos/${inv_id}`)
+      .expect(404)
+      .end(done)
+  });
+
 });
